@@ -1,9 +1,5 @@
 White Wine Exploration by Elisa Marchione
 ========================================================
-> **Tip**: One of the requirements of this project is that your code follows
-good formatting techniques, including limiting your lines to 80 characters or
-less. If you're using RStudio, go into Preferences \> Code \> Display to set up
-a margin line to help you keep track of this guideline!
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
 # Load all of the packages that you end up using in your analysis in this code
@@ -23,12 +19,10 @@ library(ggplot2)
 
 ```{r echo=FALSE, Load_the_Data}
 # Load the Data
-
+wine <- read.csv('wineQualityWhites.csv')
 ```
 
-> **Tip**: Before you create any plots, it is a good idea to provide a short
-introduction into the dataset that you are planning to explore. Replace this
-quoted text with that general information!
+> This project explores a dataset that contains 4,898 white wines.  
 
 # Univariate Plots Section
 
@@ -39,47 +33,305 @@ forget to add a comment after each plot or closely-related group of plots!
 There should be multiple code chunks and text sections; the first one below is
 just to help you get started.
 
-```{r echo=FALSE, Univariate_Plots}
+> There are 11 variables that quantify the chemical properties of the wine. There is a rating for each wine between 0 (very bad) and 10 (very excellent), averaged from at least 3 wine experts.
+
+```{r echo=FALSE}
+# List all the variables
+names(wine)
+```
+
+> This data set was already cleaned up, so the data types are appropriate. 
+
+```{r echo=FALSE}
+# Check the data types of all variables
+str(wine)
+```
+
+> First of all, I want to see the distribution of the quality scores for all the white wines. 
+
+```{r echo=FALSE}
+# Quick histogram of quality
+qplot(data = wine, x = quality)
+```
+
+```{r echo=FALSE, Univariate_plots}
+# Update histogram for better binwidth
+qplot(data = wine, 
+      x = quality,
+      binwidth = .5)
+```
+
+```{r echo=FALSE}
+summary(wine$quality)
+```
+
+> It appears to have a normal distribution, with 6 being the most common score. 
+
+> Our guiding question with this dataset is to determine which chemical properties influence the quality of white wines. I'll start out by running some summary statistics to look for any variables that stand out. 
+
+```{r echo=FALSE}
+# Summary stats for all variables
+summary(wine)
+```
+
+> The variables that stand out to me at first are the ones that have a wide range between min and max, such as residual.sugar, free.sulfur.dioxide, total.sufur.dioxide. 
+
+```{r echo=FALSE, Univariate_plots}
+# Quick histogram of residual.sugar
+qplot(data = wine, x = residual.sugar)
+```
+
+> I'm limiting the data to see the bulk of the information, as well as updating the bin width to 1 so I can get a better idea of the distribution. 
+
+```{r echo=FALSE}
+# Update plot to remove outliers
+qplot(data = wine, 
+      x = residual.sugar,
+      binwidth = 1,
+      xlim = c(0,25))
+```
+
+> It appears that residual.sugar is right-skewed, with most of the values being very low.
+
+> Domain research has determined that residual.sugar actually determines the type of wine. I realized that I could create a new variable called type from the residual.sugar value and create a categorical value that might be useful for further analysis. 
+
+```{r echo=FALSE}
+# Create new variable and set categories
+wine$type <- "Other"
+wine$type[wine$residual.sugar<10] <- "Dry"
+wine$type[10<=wine$residual.sugar & wine$residual.sugar<19] <- "Off Dry"
+wine$type[19<=wine$residual.sugar & wine$residual.sugar<51] <- "Semi Sweet"
+wine$type[51<=wine$residual.sugar & wine$residual.sugar<121] <- "Medium Sweet"
+wine$type[121<=wine$residual.sugar] <- "Sweet"
+
+# Convert into factor and set order
+wine$type <- factor(wine$type, levels = c("Dry", "Off Dry", "Semi Sweet", "Medium Sweet", "Sweet"), ordered = TRUE)
+
+# Quick plot of type values
+qplot(data = wine, x = type)
 
 ```
 
-> **Tip**: Make sure that you leave a blank line between the start / end of
-each code block and the end / start of your Markdown text so that it is
-formatted nicely in the knitted text. Note as well that text on consecutive
-lines is treated as a single space. Make sure you have a blank line between
-your paragraphs so that they too are formatted for easy readability.
+> It appears that a large majority of the wines studied were considered dry and off dry. 
+
+> I want to see how some of the other statistics are distributed. 
+
+```{r echo=FALSE}
+# Quick histogram of free.sulfur.dioxide
+qplot(data = wine, x = free.sulfur.dioxide)
+```
+
+> Free.sulfur.dioxide appears to have a normal distribution. 
+
+```{r echo=FALSE}
+# Quick histogram of total.sulfur.dioxide
+qplot(data = wine, x = total.sulfur.dioxide)
+```
+
+> Total.sufulr.dioxide also appears to have a normal distribution. 
+
+```{r echo=FALSE}
+# Quick histogram of pH
+qplot(data = wine, x = pH)
+```
+
+> pH has a normal distribution.
+
+```{r echo=FALSE}
+# Quick histogram of fixed.acidity
+qplot(data = wine, x = fixed.acidity,
+      binwidth = .5)
+```
+
+> Fixed.acidity has a normal distribution.
+
+```{r echo=FALSE}
+# Quick histogram of volatile.acidity
+qplot(data = wine, x = volatile.acidity,
+      binwidth = .05)
+```
+
+> Volatile.acidity has a relatively normal distribution.
+
+> Some domain research has helped me understand that Fixed acidity is a formula of total acidity minus volatile acidity. In this dataset, we are keeping track of both fixed.acidity and volatile.acidity, so we should we able to calculate a new variabled called total.acidity. 
+
+```{r echo=FALSE}
+
+wine$total.acidity <- wine$fixed.acidity + wine$volatile.acidity
+
+# Quick histogram of total.acidity
+qplot(data = wine, x = total.acidity)
+```
+
+> As expected, there is also a normal distribution for total.acidity. 
+
+```{r echo=FALSE}
+# Quick histogram of citric.acid
+qplot(data = wine, x = citric.acid,
+      binwidth = .02)
+```
+> Citric.acid appears to have a couple of different peaks that I might be interested in diving into more.
+
+```{r echo=FALSE}
+# Quick histogram of chlorides
+qplot(data = wine, x = chlorides)
+```
+
+```{r echo=FALSE}
+# Updating histogram of chlorides with log10
+qplot(data = wine, x = chlorides, binwidth = 0.02) +
+      scale_x_log10()
+```
+
+> After updating the plot with a log10 x value, I get a more normal distribution, but there are a couple of interesting peaks and valleys.
+
+```{r echo=FALSE}
+# Quick histogram of sulphates
+qplot(data = wine, x = sulphates,
+      binwidth = 0.05)
+```
+
+> Sulphates have a normal distribution. 
+
+```{r echo=FALSE}
+# Quick histogram of density
+qplot(data = wine, x = density,
+      binwidth = .001)
+```
+> Density appears to have a normal distribution as well, with a couple of outliers. 
+
+```{r echo=FALSE}
+# Quick histogram of alcohol
+qplot(data = wine, x = alcohol)
+```
+
+> Updating the binwidth to get a better idea of the distribution for alcohol level. I found that using a binwidth of .1 works well since the alcohol value generally has one decimal.
+
+```{r echo=FALSE}
+# Updating plot to get better binwidth
+qplot(data = wine, 
+      x = alcohol,
+      binwidth = .1)
+```
+
+> I'm not quite sure if this would be considered multimodal or not. There are quite a lot of peaks and valleys in the distribution of alcohol levels. 
+
+> I want to take a look at the subsets of quality scores to get a better idea what alcohol level variety there is among them. 
+
+```{r echo=FALSE}
+# Subset of Worst Quality
+
+worst <- subset(wine, quality < 6)
+qplot(data = worst, x = alcohol,
+      binwidth = .3)
+```
+
+> For the worst quality wines, the distribution of alcohol levels was more right-skewed.
+
+```{r echo=FALSE}
+# Subset of Medium Quality
+
+med <- subset(wine, quality = 6)
+qplot(data = med, x = alcohol,
+      binwidth = .3)
+```
+
+> For the medium quality wines, the distribution was still right-skewed, with lower alcohol values being more abundant. 
+
+```{r echo=FALSE}
+# Subset of Best Quality
+
+best <- subset(wine, quality > 6)
+qplot(data = best, x = alcohol,
+      binwidth = .3)
+```
+
+> For the best quality wines, the distribution was bi-modal, with alcohol values being higher than the worst quality wines. 
+
+```{r echo=FALSE}
+# Summary of worst quality alcohol levels
+summary(worst$alcohol)
+```
+
+```{r echo=FALSE}
+# Summary of medium quality alcohol levels
+summary(med$alcohol)
+```
+
+```{r echo=FALSE}
+# Summary of best quality alcohol levels
+summary(best$alcohol)
+```
+
+> I will definitely want to keep diving into the connection between alcohol level and quality in my later analyses. 
 
 # Univariate Analysis
 
-> **Tip**: Now that you've completed your univariate explorations, it's time to
-reflect on and summarize what you've found. Use the questions below to help you
-gather your observations and add your own if you have other thoughts!
-
 ### What is the structure of your dataset?
 
+> There are 4,898 different white vines with 12 variables (fixed.acidity, volatile.acidity, citric.acid, residual.sugar, chlorides, free.sulfur.dioxide, total.sulfur.dioxide, density, pH, sulphates, alcohol, and quality). 
+*** added variables - total.acidity, type
+
+> Observations:
+*** range in quality
+*** Type order, derived from residual.sugar amount
+*** Median quality = 6
+*** Normal distributions for a lot of the chemical properties
+*** pH is apparently a quantitative assessment of fixed acidity. *** Total acidity is formula with fixed + volatile
+
 ### What is/are the main feature(s) of interest in your dataset?
+>
+*** Alcohol level and maybe residual sugar. I want to see how these fit in with other chemical properties. 
+*** acidity - now that I know total acidity is combination of other variables. Domain research shows that acidity is a big part of the taste. Too little acidity leads to dull, flat, boring taste. 
 
 ### What other features in the dataset do you think will help support your \
 investigation into your feature(s) of interest?
+> *** Domain research has shown that acidity and pH work together to create flavor and texture. I want to see how these variables interact. 
+
 
 ### Did you create any new variables from existing variables in the dataset?
+> *** Subsets of quality to help bucket the information. 
+*** Total acidity
+*** Wine Type
 
 ### Of the features you investigated, were there any unusual distributions? \
 Did you perform any operations on the data to tidy, adjust, or change the form \
 of the data? If so, why did you do this?
+> *** residual sugar, alcohol
 
 
 # Bivariate Plots Section
 
-> **Tip**: Based on what you saw in the univariate plots, what relationships
-between variables might be interesting to look at in this section? Don't limit
-yourself to relationships between a main output feature and one of the
-supporting variables. Try to look at relationships between supporting variables
-as well.
+```{r}
+install.packages('corrplot')
+```
+
 
 ```{r echo=FALSE, Bivariate_Plots}
+library(corrplot)
+library(RColorBrewer)
 
+W <- cor(wine, use='complete.obs')
+corrplot(W, type='upper', order='hclust',
+        col=brewer.pal(n=8, name='RdYlBu'))
 ```
+
+> *** correlation matrix
+
+>*** ph vs total acidity
+
+> *** quality vs total acidity
+
+> *** quality vs alcohol content
+
+> *** type vs total acidity
+
+> *** look for other interesting correlations with matrix
+
+
+
+
+
 
 # Bivariate Analysis
 
